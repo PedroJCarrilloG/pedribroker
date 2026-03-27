@@ -1,0 +1,131 @@
+// PEDRIBROKER ULTRA PRO FINAL VERSION
+// ====================================
+// Includes:
+// ✔ TradingView-like UI
+// ✔ Real-time price (Binance)
+// ✔ Order Book (real-time)
+// ✔ Portfolio with PnL
+// ✔ Multi charts
+
+import { useState, useEffect } from 'react';
+
+export default function App() {
+  const [price, setPrice] = useState(0);
+  const [asset, setAsset] = useState('btcusdt');
+  const [orderBook, setOrderBook] = useState({ bids: [], asks: [] });
+  const [portfolio, setPortfolio] = useState([
+    { asset: 'BTC', amount: 0.5, entry: 30000 }
+  ]);
+
+  // REAL-TIME PRICE
+  useEffect(() => {
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${asset}@trade`);
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setPrice(parseFloat(data.p));
+    };
+
+    return () => ws.close();
+  }, [asset]);
+
+  // ORDER BOOK
+  useEffect(() => {
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${asset}@depth5`);
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setOrderBook({ bids: data.bids, asks: data.asks });
+    };
+
+    return () => ws.close();
+  }, [asset]);
+
+  // PnL CALC
+  const calculatePnL = (pos) => {
+    const current = price;
+    const pnl = (current - pos.entry) * pos.amount;
+    return pnl.toFixed(2);
+  };
+
+  return (
+    <div className="h-screen bg-[#0b0e11] text-white grid grid-cols-[250px_1fr_300px] grid-rows-[60px_1fr]">
+
+      {/* HEADER */}
+      <div className="col-span-3 flex items-center justify-between px-4 border-b border-gray-800">
+        <h1 className="text-green-400 text-xl font-bold">PedriBroker</h1>
+        <div className="text-lg uppercase">{asset} ${price.toFixed(2)}</div>
+      </div>
+
+      {/* WATCHLIST */}
+      <div className="border-r border-gray-800 p-3 overflow-y-auto">
+        {["btcusdt", "ethusdt", "bnbusdt"].map((a) => (
+          <div
+            key={a}
+            className="p-2 hover:bg-gray-800 cursor-pointer"
+            onClick={() => setAsset(a)}
+          >
+            {a.toUpperCase()}
+          </div>
+        ))}
+      </div>
+
+      {/* MULTI CHARTS */}
+      <div className="grid grid-cols-2 grid-rows-2 gap-1">
+        {[1,2,3,4].map((i) => (
+          <iframe
+            key={i}
+            src={`https://s.tradingview.com/widgetembed/?symbol=BINANCE:${asset.toUpperCase()}&interval=60&theme=dark`}
+            className="w-full h-full border-none"
+          />
+        ))}
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="border-l border-gray-800 p-2 overflow-y-auto">
+
+        {/* ORDER BOOK */}
+        <h3 className="mb-2">Order Book</h3>
+        <div className="grid grid-cols-2 text-sm">
+          <div>
+            <h4 className="text-green-400">Bids</h4>
+            {orderBook.bids.map((b, i) => (
+              <div key={i}>{b[0]} ({b[1]})</div>
+            ))}
+          </div>
+          <div>
+            <h4 className="text-red-400">Asks</h4>
+            {orderBook.asks.map((a, i) => (
+              <div key={i}>{a[0]} ({a[1]})</div>
+            ))}
+          </div>
+        </div>
+
+        {/* PORTFOLIO */}
+        <h3 className="mt-4">Portfolio</h3>
+        {portfolio.map((p, i) => (
+          <div key={i} className="mt-2">
+            {p.asset} | {p.amount} | Entry: {p.entry}
+            <div className={calculatePnL(p) >= 0 ? 'text-green-400' : 'text-red-400'}>
+              PnL: {calculatePnL(p)}
+            </div>
+          </div>
+        ))}
+
+      </div>
+
+    </div>
+  );
+}
+
+// ================= RESULTADO FINAL =================
+// ✔ Order Book en tiempo real
+// ✔ Portfolio con PnL dinámico
+// ✔ Multi gráficos simultáneos
+// ✔ Arquitectura estilo broker profesional
+
+// ================= SIGUIENTE NIVEL (REAL STARTUP) =================
+// - Persistencia en backend
+// - Órdenes reales (market/limit)
+// - Usuarios reales
+// - Deploy cloud + dominio
