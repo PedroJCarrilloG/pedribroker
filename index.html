@@ -1,133 +1,257 @@
-// PEDRIBROKER ULTRA PRO FINAL VERSION
-// ====================================
-// Includes:
-// ✔ TradingView-like UI
-// ✔ Real-time price (Binance)
-// ✔ Order Book (real-time)
-// ✔ Portfolio with PnL
-// ✔ Multi charts
 
-import { useState, useEffect } from 'react';
 
-export default function App() {
-  const [price, setPrice] = useState(0);
-  const [asset, setAsset] = useState('btcusdt');
-  const [orderBook, setOrderBook] = useState({ bids: [], asks: [] });
-  const [portfolio, setPortfolio] = useState([
-    { asset: 'BTC', amount: 0.5, entry: 30000 }
-  ]);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PedriBroker Pro | Terminal de Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0b0e11; color: #e9eaeb; overflow: hidden; }
+        .glass { background: rgba(23, 27, 34, 0.8); backdrop-filter: blur(10px); }
+        .border-gray { border-color: #2b2f36; }
+        .tradingview-widget-container { height: 100% !important; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0b0e11; }
+        ::-webkit-scrollbar-thumb { background: #2b2f36; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
 
-  // REAL-TIME PRICE
-  useEffect(() => {
-    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${asset}@trade`);
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setPrice(parseFloat(data.p));
-    };
-
-    return () => ws.close();
-  }, [asset]);
-
-  // ORDER BOOK
-  useEffect(() => {
-    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${asset}@depth5`);
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setOrderBook({ bids: data.bids, asks: data.asks });
-    };
-
-    return () => ws.close();
-  }, [asset]);
-
-  // PnL CALC
-  const calculatePnL = (pos) => {
-    const current = price;
-    const pnl = (current - pos.entry) * pos.amount;
-    return pnl.toFixed(2);
-  };
-
-  return (
-    <div className="h-screen bg-[#0b0e11] text-white grid grid-cols-[250px_1fr_300px] grid-rows-[60px_1fr]">
-
-      {/* HEADER */}
-      <div className="col-span-3 flex items-center justify-between px-4 border-b border-gray-800">
-        <h1 className="text-green-400 text-xl font-bold">PedriBroker</h1>
-        <div className="text-lg uppercase">{asset} ${price.toFixed(2)}</div>
-      </div>
-
-      {/* WATCHLIST */}
-      <div className="border-r border-gray-800 p-3 overflow-y-auto">
-        {["btcusdt", "ethusdt", "bnbusdt"].map((a) => (
-          <div
-            key={a}
-            className="p-2 hover:bg-gray-800 cursor-pointer"
-            onClick={() => setAsset(a)}
-          >
-            {a.toUpperCase()}
-          </div>
-        ))}
-      </div>
-
-      {/* MULTI CHARTS */}
-      <div className="grid grid-cols-2 grid-rows-2 gap-1">
-        {[1,2,3,4].map((i) => (
-          <iframe
-            key={i}
-            src={`https://s.tradingview.com/widgetembed/?symbol=BINANCE:${asset.toUpperCase()}&interval=60&theme=dark`}
-            className="w-full h-full border-none"
-          />
-        ))}
-      </div>
-
-      {/* RIGHT PANEL */}
-      <div className="border-l border-gray-800 p-2 overflow-y-auto">
-
-        {/* ORDER BOOK */}
-        <h3 className="mb-2">Order Book</h3>
-        <div className="grid grid-cols-2 text-sm">
-          <div>
-            <h4 className="text-green-400">Bids</h4>
-            {orderBook.bids.map((b, i) => (
-              <div key={i}>{b[0]} ({b[1]})</div>
-            ))}
-          </div>
-          <div>
-            <h4 className="text-red-400">Asks</h4>
-            {orderBook.asks.map((a, i) => (
-              <div key={i}>{a[0]} ({a[1]})</div>
-            ))}
-          </div>
-        </div>
-
-        {/* PORTFOLIO */}
-        <h3 className="mt-4">Portfolio</h3>
-        {portfolio.map((p, i) => (
-          <div key={i} className="mt-2">
-            {p.asset} | {p.amount} | Entry: {p.entry}
-            <div className={calculatePnL(p) >= 0 ? 'text-green-400' : 'text-red-400'}>
-              PnL: {calculatePnL(p)}
+    <nav class="h-14 border-b border-gray flex items-center justify-between px-4 glass z-50">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-1.5 rounded-lg">
+                    <i data-lucide="trending-up" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-white">Pedri<span class="text-blue-500">Broker</span></span>
             </div>
-          </div>
-        ))}
+            <div class="hidden md:flex gap-6 text-sm font-medium text-gray-400">
+                <a href="#" class="text-blue-500 border-b-2 border-blue-500 h-14 flex items-center">Operar</a>
+                <a href="#" class="hover:text-white h-14 flex items-center transition">Portafolio</a>
+                <a href="#" class="hover:text-white h-14 flex items-center transition">Órdenes</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="hidden sm:block text-right">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Saldo Disponible</p>
+                <p class="text-sm font-bold text-green-400">$45,280.50</p>
+            </div>
+            <button class="bg-gray-800 p-2 rounded-full hover:bg-gray-700">
+                <i data-lucide="bell" class="w-5 h-5 text-gray-300"></i>
+            </button>
+            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-500/20">
+                PM
+            </div>
+        </div>
+    </nav>
 
-      </div>
+    <main class="flex-1 flex overflow-hidden">
+        
+        <aside class="w-full md:w-80 border-r border-gray flex flex-col glass">
+            <div class="p-4 border-b border-gray">
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-500"></i>
+                    <input type="text" placeholder="Buscar activos..." class="w-full bg-[#1e222d] border border-gray rounded-md py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-2">
+                    <div class="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
+                        <button class="px-3 py-1 bg-blue-600 text-xs rounded-full">Favoritos</button>
+                        <button class="px-3 py-1 bg-gray-800 text-xs rounded-full hover:bg-gray-700">Forex</button>
+                        <button class="px-3 py-1 bg-gray-800 text-xs rounded-full hover:bg-gray-700">Acciones</button>
+                        <button class="px-3 py-1 bg-gray-800 text-xs rounded-full hover:bg-gray-700">Cripto</button>
+                    </div>
+                    
+                    <div id="market-list" class="space-y-1">
+                        <div onclick="changeSymbol('NASDAQ:AAPL')" class="flex items-center justify-between p-3 rounded-lg hover:bg-[#1e222d] cursor-pointer group transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-bold text-[10px]">AAPL</div>
+                                <div>
+                                    <p class="text-sm font-bold">Apple Inc.</p>
+                                    <p class="text-[10px] text-gray-500">Acciones · NASDAQ</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-mono font-bold">189.45</p>
+                                <p class="text-[10px] text-green-400">+1.24%</p>
+                            </div>
+                        </div>
 
-    </div>
-  );
-}
+                        <div onclick="changeSymbol('FX:EURUSD')" class="flex items-center justify-between p-3 rounded-lg hover:bg-[#1e222d] cursor-pointer group bg-[#1e222d]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center text-white font-bold text-[10px]">EUR</div>
+                                <div>
+                                    <p class="text-sm font-bold">EUR/USD</p>
+                                    <p class="text-[10px] text-gray-500">Forex · 1:30</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-mono font-bold">1.0842</p>
+                                <p class="text-[10px] text-red-400">-0.05%</p>
+                            </div>
+                        </div>
 
-// ================= RESULTADO FINAL =================
-// ✔ Order Book en tiempo real
-// ✔ Portfolio con PnL dinámico
-// ✔ Multi gráficos simultáneos
-// ✔ Arquitectura estilo broker profesional
+                        <div onclick="changeSymbol('BINANCE:BTCUSDT')" class="flex items-center justify-between p-3 rounded-lg hover:bg-[#1e222d] cursor-pointer group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">BTC</div>
+                                <div>
+                                    <p class="text-sm font-bold">Bitcoin</p>
+                                    <p class="text-[10px] text-gray-500">Cripto · 24h</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-mono font-bold">67,432.10</p>
+                                <p class="text-[10px] text-green-400">+4.15%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-// ================= SIGUIENTE NIVEL (REAL STARTUP) =================
-// - Persistencia en backend
-// - Órdenes reales (market/limit)
-// - Usuarios reales
-// - Deploy cloud + dominio
+        <section class="flex-1 flex flex-col bg-[#131722]">
+            <div id="tradingview_widget" class="flex-1">
+                </div>
+            
+            <div class="h-48 border-t border-gray glass p-4 overflow-y-auto hidden md:block">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Posiciones Abiertas (3)</h3>
+                    <div class="flex gap-4 text-xs">
+                        <span class="text-gray-400">PnL No Realizado: <b class="text-green-400">+$1,240.00</b></span>
+                    </div>
+                </div>
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-gray-500 border-b border-gray">
+                            <th class="pb-2 font-medium">Instrumento</th>
+                            <th class="pb-2 font-medium">Tamaño</th>
+                            <th class="pb-2 font-medium">Precio Apertura</th>
+                            <th class="pb-2 font-medium">Precio Actual</th>
+                            <th class="pb-2 font-medium">PnL</th>
+                            <th class="pb-2 font-medium text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-800">
+                        <tr>
+                            <td class="py-3 font-bold">EUR/USD</td>
+                            <td class="py-3">10,000</td>
+                            <td class="py-3 font-mono text-gray-400">1.0820</td>
+                            <td class="py-3 font-mono">1.0842</td>
+                            <td class="py-3 text-green-400 font-bold">+$22.00</td>
+                            <td class="py-3 text-right">
+                                <button class="text-red-500 hover:text-red-400 text-xs font-bold">CERRAR</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
+        <aside class="w-72 border-l border-gray hidden lg:flex flex-col glass">
+            <div class="p-6">
+                <div class="flex bg-gray-800 rounded-lg p-1 mb-6">
+                    <button class="flex-1 py-2 text-sm font-bold rounded-md bg-green-600 text-white">COMPRAR</button>
+                    <button class="flex-1 py-2 text-sm font-bold rounded-md text-gray-400 hover:text-white">VENDER</button>
+                </div>
 
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold uppercase">Monto (USD)</label>
+                        <input type="number" value="1000" class="w-full bg-[#1e222d] border border-gray rounded-md py-3 px-4 mt-1 font-mono focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] text-gray-500 font-bold uppercase">Stop Loss</label>
+                            <input type="text" placeholder="No fijado" class="w-full bg-[#1e222d] border border-gray rounded-md py-2 px-3 mt-1 text-xs outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 font-bold uppercase">Take Profit</label>
+                            <input type="text" placeholder="No fijado" class="w-full bg-[#1e222d] border border-gray rounded-md py-2 px-3 mt-1 text-xs outline-none">
+                        </div>
+                    </div>
+                    <div class="pt-4 space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">Margen requerido</span>
+                            <span>$33.33</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">Comisión</span>
+                            <span class="text-green-400">GRATIS</span>
+                        </div>
+                    </div>
+                    <button class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl mt-6 transition shadow-lg shadow-blue-600/20 active:scale-95">
+                        Ejecutar Operación
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-auto p-4 border-t border-gray">
+                <div class="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg">
+                    <p class="text-[10px] text-blue-400 font-bold flex items-center gap-1 uppercase">
+                        <i data-lucide="info" class="w-3 h-3"></i> Tip de Senior
+                    </p>
+                    <p class="text-[11px] text-gray-300 mt-1">El mercado NASDAQ abre en 2 horas. Revisa tus posiciones de Apple.</p>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <nav class="md:hidden h-16 border-t border-gray glass flex items-center justify-around px-2">
+        <button class="flex flex-col items-center gap-1 text-blue-500">
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold">Mercados</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-500">
+            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+            <span class="text-[10px]">Gráfico</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-500">
+            <i data-lucide="briefcase" class="w-5 h-5"></i>
+            <span class="text-[10px]">Cartera</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-500">
+            <i data-lucide="user" class="w-5 h-5"></i>
+            <span class="text-[10px]">Perfil</span>
+        </button>
+    </nav>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        // Inicializar Iconos
+        lucide.createIcons();
+
+        // Renderizar Gráfico
+        let currentSymbol = "FX:EURUSD";
+        
+        function loadChart(symbol) {
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": symbol,
+                "interval": "D",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "es",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "save_image": false,
+                "container_id": "tradingview_widget"
+            });
+        }
+
+        function changeSymbol(symbol) {
+            loadChart(symbol);
+        }
+
+        // Carga inicial
+        window.onload = () => loadChart(currentSymbol);
+    </script>
+</body>
+</html>
